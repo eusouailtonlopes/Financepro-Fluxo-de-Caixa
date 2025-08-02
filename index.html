@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FinancePro Simples</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -75,15 +75,59 @@
       max-width: 600px;
       max-height: 300px;
       display: block;
-      margin: 0 auto;
+      margin: 20px auto;
     }
   </style>
   <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const campos = Array.from(e.target.querySelectorAll('input, select'));
+          const tipo = e.target.closest('.section').id;
+          salvarDados(tipo, campos);
+          e.target.reset();
+        });
+      });
+    });
+
     function mostrarSecao(id) {
       const secoes = document.querySelectorAll('.section');
       secoes.forEach(secao => secao.classList.remove('active'));
       const secaoSelecionada = document.getElementById(id);
       if (secaoSelecionada) secaoSelecionada.classList.add('active');
+      if (id === 'relatorios') renderizarGrafico();
+    }
+
+    function renderizarGrafico() {
+      const entradas = JSON.parse(localStorage.getItem('entradas') || '[]');
+      const saidas = JSON.parse(localStorage.getItem('saidas') || '[]');
+      const totalEntradas = entradas.reduce((acc, item) => acc + parseFloat(item.valor || 0), 0);
+      const totalSaidas = saidas.reduce((acc, item) => acc + parseFloat(item.valor || 0), 0);
+      const ctx = document.getElementById('graficoResumo').getContext('2d');
+      if (window.meuGrafico) window.meuGrafico.destroy();
+      window.meuGrafico = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Entradas', 'Saídas'],
+          datasets: [{
+            data: [totalEntradas, totalSaidas],
+            backgroundColor: ['#28a745', '#dc3545']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    }
+
+    function salvarDados(tipo, campos) {
+      const dados = JSON.parse(localStorage.getItem(tipo) || '[]');
+      const novo = {};
+      campos.forEach(campo => novo[campo.name] = campo.value);
+      dados.push(novo);
+      localStorage.setItem(tipo, JSON.stringify(dados));
     }
   </script>
 </head>
@@ -101,11 +145,11 @@
   <div id="entradas" class="section active">
     <h2>Cadastro de Entradas</h2>
     <form>
-      <input type="date" placeholder="Data">
-      <input type="text" placeholder="Descrição">
-      <input type="text" placeholder="Categoria">
-      <input type="number" placeholder="Valor (R$)">
-      <input type="text" placeholder="Cliente (opcional)">
+      <input name="data" type="date" placeholder="Data">
+      <input name="descricao" type="text" placeholder="Descrição">
+      <input name="categoria" type="text" placeholder="Categoria">
+      <input name="valor" type="number" placeholder="Valor (R$)">
+      <input name="cliente" type="text" placeholder="Cliente (opcional)">
       <button>Adicionar Entrada</button>
     </form>
   </div>
@@ -113,11 +157,11 @@
   <div id="saidas" class="section">
     <h2>Cadastro de Saídas</h2>
     <form>
-      <input type="date" placeholder="Data">
-      <input type="text" placeholder="Descrição">
-      <input type="text" placeholder="Categoria">
-      <input type="number" placeholder="Valor (R$)">
-      <input type="text" placeholder="Fornecedor (opcional)">
+      <input name="data" type="date" placeholder="Data">
+      <input name="descricao" type="text" placeholder="Descrição">
+      <input name="categoria" type="text" placeholder="Categoria">
+      <input name="valor" type="number" placeholder="Valor (R$)">
+      <input name="fornecedor" type="text" placeholder="Fornecedor (opcional)">
       <button>Adicionar Saída</button>
     </form>
   </div>
@@ -125,9 +169,9 @@
   <div id="clientes" class="section">
     <h2>Cadastro de Clientes</h2>
     <form>
-      <input type="text" placeholder="Nome do Cliente">
-      <input type="text" placeholder="Telefone">
-      <input type="email" placeholder="Email">
+      <input name="nome" type="text" placeholder="Nome do Cliente">
+      <input name="telefone" type="text" placeholder="Telefone">
+      <input name="email" type="email" placeholder="Email">
       <button>Cadastrar Cliente</button>
     </form>
   </div>
@@ -135,9 +179,9 @@
   <div id="fornecedores" class="section">
     <h2>Cadastro de Fornecedores</h2>
     <form>
-      <input type="text" placeholder="Nome do Fornecedor">
-      <input type="text" placeholder="Telefone">
-      <input type="email" placeholder="Email">
+      <input name="nome" type="text" placeholder="Nome do Fornecedor">
+      <input name="telefone" type="text" placeholder="Telefone">
+      <input name="email" type="email" placeholder="Email">
       <button>Cadastrar Fornecedor</button>
     </form>
   </div>
@@ -154,6 +198,7 @@
       </select>
       <button>Gerar Relatório</button>
     </form>
+    <canvas id="graficoResumo"></canvas>
   </div>
 
 </body>
