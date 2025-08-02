@@ -2,8 +2,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FinancePro Simples</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -59,15 +59,9 @@
       background-color: #ff6b00;
       color: white;
     }
-    .entrada {
-      color: green;
-    }
-    .saida {
-      color: red;
-    }
-    .form p strong {
-      color: #007bff;
-    }
+    .entrada { color: green; }
+    .saida { color: red; }
+    .form p strong { color: #007bff; }
     .section { display: none; }
     .active { display: block; }
     #graficoResumo {
@@ -89,60 +83,72 @@
     <button onclick="mostrarSecao('clientes')">Clientes</button>
     <button onclick="mostrarSecao('fornecedores')">Fornecedores</button>
     <button onclick="mostrarSecao('relatorios')">Relatórios</button>
+    <button onclick="mostrarSecao('resumo')">Resumo</button>
   </nav>
 
   <div id="entradas" class="section">
     <div class="form">
       <input type="date" id="data-entrada" required>
       <input type="text" id="descricao-entrada" placeholder="Descrição" required>
-      <input type="text" id="categoria-entrada" placeholder="Categoria (ex: vendas, serviços...)" required>
+      <input type="text" id="categoria-entrada" placeholder="Categoria" required>
       <input type="number" id="valor-entrada" placeholder="Valor (R$)" required>
       <input type="text" id="cliente-entrada" placeholder="Cliente (opcional)">
       <button onclick="adicionarEntrada()">Adicionar Entrada</button>
     </div>
     <table>
       <thead>
-        <tr>
-          <th>Data</th>
-          <th>Descrição</th>
-          <th>Categoria</th>
-          <th>Valor (R$)</th>
-          <th>Cliente</th>
-          <th>Ação</th>
-        </tr>
+        <tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor (R$)</th><th>Cliente</th><th>Ação</th></tr>
       </thead>
       <tbody id="tabela-entradas"></tbody>
     </table>
   </div>
 
+  <div id="saidas" class="section">
+    <h3>Saídas</h3>
+    <p>(A ser implementado...)</p>
+  </div>
+
+  <div id="clientes" class="section">
+    <h3>Cadastro de Clientes</h3>
+    <p>(A ser implementado...)</p>
+  </div>
+
+  <div id="fornecedores" class="section">
+    <h3>Cadastro de Fornecedores</h3>
+    <p>(A ser implementado...)</p>
+  </div>
+
+  <div id="relatorios" class="section">
+    <h3>Relatórios</h3>
+    <p>(A ser implementado...)</p>
+  </div>
+
   <div id="resumo" class="section active">
-    <h3 style="text-align:center;">Resumo</h3>
+    <h3 style="text-align:center;">Resumo Financeiro</h3>
     <canvas id="graficoResumo" width="600" height="300"></canvas>
   </div>
 
   <script>
-    let lancamentos = Array.isArray(JSON.parse(localStorage.getItem('financepro_lancamentos'))) ? JSON.parse(localStorage.getItem('financepro_lancamentos')) : [];
+    let lancamentos = JSON.parse(localStorage.getItem('financepro_lancamentos')) || [];
 
-    const tabelaEntradas = document.getElementById('tabela-entradas');
-
-    function mostrarSecao(secaoId) {
-      document.querySelectorAll('.section').forEach(div => div.classList.remove('active'));
-      document.getElementById(secaoId).classList.add('active');
+    function mostrarSecao(id) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
     }
 
     function atualizarTabelaEntradas() {
-      tabelaEntradas.innerHTML = '';
-      lancamentos.forEach((item, index) => {
+      const tabela = document.getElementById('tabela-entradas');
+      tabela.innerHTML = '';
+      lancamentos.forEach((item, i) => {
         if (item.tipo === 'Entrada') {
-          const row = `<tr>
+          tabela.innerHTML += `<tr>
             <td>${item.data}</td>
             <td>${item.descricao}</td>
             <td>${item.categoria}</td>
             <td>R$ ${parseFloat(item.valor).toFixed(2)}</td>
             <td>${item.cliente}</td>
-            <td><button onclick="removerLancamento(${index})">Remover</button></td>
+            <td><button onclick="removerLancamento(${i})">Remover</button></td>
           </tr>`;
-          tabelaEntradas.innerHTML += row;
         }
       });
     }
@@ -155,20 +161,14 @@
       const cliente = document.getElementById('cliente-entrada').value;
 
       if (!data || !descricao || !categoria || !valor) {
-        alert("Preencha todos os campos obrigatórios.");
+        alert("Preencha todos os campos.");
         return;
       }
 
-      lancamentos.push({ data, descricao, tipo: 'Entrada', categoria, valor, cliente });
+      lancamentos.push({ data, descricao, categoria, valor, cliente, tipo: 'Entrada' });
       localStorage.setItem('financepro_lancamentos', JSON.stringify(lancamentos));
       atualizarTabelaEntradas();
       atualizarGraficoResumo();
-
-      document.getElementById('data-entrada').value = '';
-      document.getElementById('descricao-entrada').value = '';
-      document.getElementById('categoria-entrada').value = '';
-      document.getElementById('valor-entrada').value = '';
-      document.getElementById('cliente-entrada').value = '';
     }
 
     function removerLancamento(index) {
@@ -181,28 +181,17 @@
     function atualizarGraficoResumo() {
       const entradas = lancamentos.filter(l => l.tipo === 'Entrada').reduce((acc, l) => acc + parseFloat(l.valor || 0), 0);
       const saidas = lancamentos.filter(l => l.tipo === 'Saída').reduce((acc, l) => acc + parseFloat(l.valor || 0), 0);
+      const ctx = document.getElementById('graficoResumo').getContext('2d');
 
-      const canvas = document.getElementById('graficoResumo');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-
-      if (window.graficoResumoInstance) {
-        window.graficoResumoInstance.destroy();
-      }
+      if (window.graficoResumoInstance) window.graficoResumoInstance.destroy();
 
       window.graficoResumoInstance = new Chart(ctx, {
         type: 'pie',
         data: {
           labels: ['Entradas', 'Saídas'],
-          datasets: [{
-            data: [entradas, saidas],
-            backgroundColor: ['#28a745', '#dc3545']
-          }]
+          datasets: [{ data: [entradas, saidas], backgroundColor: ['#28a745', '#dc3545'] }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false
-        }
+        options: { responsive: true, maintainAspectRatio: false }
       });
     }
 
