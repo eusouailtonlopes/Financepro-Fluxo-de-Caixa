@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -86,9 +87,11 @@
           const campos = Array.from(e.target.querySelectorAll('input, select'));
           const tipo = e.target.closest('.section').id;
           salvarDados(tipo, campos);
+          atualizarTabela(tipo);
           e.target.reset();
         });
       });
+      ['entradas', 'saidas', 'clientes', 'fornecedores'].forEach(atualizarTabela);
     });
 
     function mostrarSecao(id) {
@@ -129,6 +132,18 @@
       dados.push(novo);
       localStorage.setItem(tipo, JSON.stringify(dados));
     }
+
+    function atualizarTabela(tipo) {
+      const dados = JSON.parse(localStorage.getItem(tipo) || '[]');
+      const tabela = document.getElementById('tabela-' + tipo);
+      if (!tabela) return;
+      tabela.innerHTML = '';
+      dados.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = Object.values(item).map(val => `<td>${val}</td>`).join('');
+        tabela.appendChild(tr);
+      });
+    }
   </script>
 </head>
 <body>
@@ -152,6 +167,10 @@
       <input name="cliente" type="text" placeholder="Cliente (opcional)">
       <button>Adicionar Entrada</button>
     </form>
+    <table>
+      <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Cliente</th></tr></thead>
+      <tbody id="tabela-entradas"></tbody>
+    </table>
   </div>
 
   <div id="saidas" class="section">
@@ -164,6 +183,10 @@
       <input name="fornecedor" type="text" placeholder="Fornecedor (opcional)">
       <button>Adicionar Saída</button>
     </form>
+    <table>
+      <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Fornecedor</th></tr></thead>
+      <tbody id="tabela-saidas"></tbody>
+    </table>
   </div>
 
   <div id="clientes" class="section">
@@ -174,6 +197,10 @@
       <input name="email" type="email" placeholder="Email">
       <button>Cadastrar Cliente</button>
     </form>
+    <table>
+      <thead><tr><th>Nome</th><th>Telefone</th><th>Email</th></tr></thead>
+      <tbody id="tabela-clientes"></tbody>
+    </table>
   </div>
 
   <div id="fornecedores" class="section">
@@ -184,6 +211,10 @@
       <input name="email" type="email" placeholder="Email">
       <button>Cadastrar Fornecedor</button>
     </form>
+    <table>
+      <thead><tr><th>Nome</th><th>Telefone</th><th>Email</th></tr></thead>
+      <tbody id="tabela-fornecedores"></tbody>
+    </table>
   </div>
 
   <div id="relatorios" class="section">
@@ -200,6 +231,5 @@
     </form>
     <canvas id="graficoResumo"></canvas>
   </div>
-
 </body>
 </html>
