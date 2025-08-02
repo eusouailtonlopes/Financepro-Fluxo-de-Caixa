@@ -4,76 +4,228 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FinancePro Simples</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #ff6b00;
+    }
+    nav {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav button {
+      margin: 5px;
+      padding: 10px 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    nav button:hover {
+      background-color: #0056b3;
+    }
+    .form, table, .section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    }
+    input, select, button {
+      margin: 5px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #ff6b00;
+      color: white;
+    }
+    .entrada {
+      color: green;
+    }
+    .saida {
+      color: red;
+    }
+    .form p strong {
+      color: #007bff;
+    }
+    .section { display: none; }
+    .active { display: block; }
+  </style>
 </head>
 <body>
-  <!-- O conteúdo será sobrescrito abaixo com o trecho do canvas completo -->
-<div id="saidas" class="section">
-  <div class="form">
-    <input type="date" id="data-saida" required>
-    <input type="text" id="descricao-saida" placeholder="Descrição" required>
-    <input type="text" id="categoria-saida" placeholder="Categoria (ex: energia, água...)" required>
-    <input type="number" id="valor-saida" placeholder="Valor (R$)" required>
-    <input type="text" id="cliente-saida" placeholder="Cliente (opcional)">
-    <button onclick="adicionarSaida()">Adicionar Saída</button>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Descrição</th>
-        <th>Categoria</th>
-        <th>Valor (R$)</th>
-        <th>Cliente</th>
-        <th>Ação</th>
-      </tr>
-    </thead>
-    <tbody id="tabela-saidas"></tbody>
-  </table>
-</div>
-<script>
-  if (typeof lancamentos === 'undefined') {
-    var lancamentos = JSON.parse(localStorage.getItem('financepro_lancamentos')) || [];
-  }
-  const tabelaSaidas = document.getElementById('tabela-saidas');
-  function atualizarTabelaSaidas() {
-    if (!tabelaSaidas) return;
-    tabelaSaidas.innerHTML = '';
-    lancamentos.forEach((item, index) => {
-      if (item.tipo === 'Saída') {
-        const row = `<tr>
-          <td>${item.data}</td>
-          <td>${item.descricao}</td>
-          <td>${item.categoria}</td>
-          <td>R$ ${parseFloat(item.valor).toFixed(2)}</td>
-          <td>${item.cliente}</td>
-          <td><button onclick="removerLancamento(${index})">Remover</button></td>
-        </tr>`;
-        tabelaSaidas.innerHTML += row;
-      }
-    });
-  }
-  function adicionarSaida() {
-    const data = document.getElementById('data-saida').value;
-    const descricao = document.getElementById('descricao-saida').value;
-    const categoria = document.getElementById('categoria-saida').value;
-    const valor = document.getElementById('valor-saida').value;
-    const cliente = document.getElementById('cliente-saida').value;
-    if (!data || !descricao || !categoria || !valor) {
-      alert("Preencha todos os campos obrigatórios.");
-      return;
-    }
-    lancamentos.push({ data, descricao, tipo: 'Saída', categoria, valor, cliente });
-    localStorage.setItem('financepro_lancamentos', JSON.stringify(lancamentos));
-    if (typeof atualizarTabela === 'function') atualizarTabela();
-    atualizarTabelaSaidas();
-    document.getElementById('data-saida').value = '';
-    document.getElementById('descricao-saida').value = '';
-    document.getElementById('categoria-saida').value = '';
-    document.getElementById('valor-saida').value = '';
-    document.getElementById('cliente-saida').value = '';
-  }
-  atualizarTabelaSaidas();
-</script>
+  <h1>FinancePro Simples</h1>
 
+  <nav>
+    <button onclick="mostrarSecao('entradas')">Entradas</button>
+    <button onclick="mostrarSecao('saidas')">Saídas</button>
+    <button onclick="mostrarSecao('clientes')">Clientes</button>
+  </nav>
+
+  <!-- CLIENTES -->
+  <div id="clientes" class="section">
+    <div class="form">
+      <input type="text" id="nome-cliente" placeholder="Nome do Cliente" required>
+      <input type="text" id="telefone-cliente" placeholder="Telefone" required>
+      <input type="text" id="email-cliente" placeholder="Email (opcional)">
+      <button onclick="adicionarCliente()">Cadastrar Cliente</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Telefone</th>
+          <th>Email</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-clientes"></tbody>
+    </table>
+  </div>
+
+  <!-- SAÍDAS -->
+  <div id="saidas" class="section">
+    <div class="form">
+      <input type="date" id="data-saida" required>
+      <input type="text" id="descricao-saida" placeholder="Descrição" required>
+      <input type="text" id="categoria-saida" placeholder="Categoria (ex: energia, água...)" required>
+      <input type="number" id="valor-saida" placeholder="Valor (R$)" required>
+      <input type="text" id="cliente-saida" placeholder="Cliente (opcional)">
+      <button onclick="adicionarSaida()">Adicionar Saída</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Descrição</th>
+          <th>Categoria</th>
+          <th>Valor (R$)</th>
+          <th>Cliente</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-saidas"></tbody>
+    </table>
+  </div>
+
+  <script>
+    let lancamentos = JSON.parse(localStorage.getItem('financepro_lancamentos')) || [];
+    let clientes = JSON.parse(localStorage.getItem('financepro_clientes')) || [];
+
+    const tabelaSaidas = document.getElementById('tabela-saidas');
+    const tabelaClientes = document.getElementById('tabela-clientes');
+
+    function mostrarSecao(secaoId) {
+      document.querySelectorAll('.section').forEach(div => div.classList.remove('active'));
+      document.getElementById(secaoId).classList.add('active');
+    }
+
+    function atualizarTabelaSaidas() {
+      if (!tabelaSaidas) return;
+      tabelaSaidas.innerHTML = '';
+      lancamentos.forEach((item, index) => {
+        if (item.tipo === 'Saída') {
+          const row = `<tr>
+            <td>${item.data}</td>
+            <td>${item.descricao}</td>
+            <td>${item.categoria}</td>
+            <td>R$ ${parseFloat(item.valor).toFixed(2)}</td>
+            <td>${item.cliente}</td>
+            <td><button onclick="removerLancamento(${index})">Remover</button></td>
+          </tr>`;
+          tabelaSaidas.innerHTML += row;
+        }
+      });
+    }
+
+    function adicionarSaida() {
+      const data = document.getElementById('data-saida').value;
+      const descricao = document.getElementById('descricao-saida').value;
+      const categoria = document.getElementById('categoria-saida').value;
+      const valor = document.getElementById('valor-saida').value;
+      const cliente = document.getElementById('cliente-saida').value;
+
+      if (!data || !descricao || !categoria || !valor) {
+        alert("Preencha todos os campos obrigatórios.");
+        return;
+      }
+
+      lancamentos.push({ data, descricao, tipo: 'Saída', categoria, valor, cliente });
+      localStorage.setItem('financepro_lancamentos', JSON.stringify(lancamentos));
+      atualizarTabelaSaidas();
+
+      document.getElementById('data-saida').value = '';
+      document.getElementById('descricao-saida').value = '';
+      document.getElementById('categoria-saida').value = '';
+      document.getElementById('valor-saida').value = '';
+      document.getElementById('cliente-saida').value = '';
+    }
+
+    function adicionarCliente() {
+      const nome = document.getElementById('nome-cliente').value;
+      const telefone = document.getElementById('telefone-cliente').value;
+      const email = document.getElementById('email-cliente').value;
+
+      if (!nome || !telefone) {
+        alert("Preencha nome e telefone.");
+        return;
+      }
+
+      clientes.push({ nome, telefone, email });
+      localStorage.setItem('financepro_clientes', JSON.stringify(clientes));
+      atualizarTabelaClientes();
+
+      document.getElementById('nome-cliente').value = '';
+      document.getElementById('telefone-cliente').value = '';
+      document.getElementById('email-cliente').value = '';
+    }
+
+    function atualizarTabelaClientes() {
+      tabelaClientes.innerHTML = '';
+      clientes.forEach((item, index) => {
+        const row = `<tr>
+          <td>${item.nome}</td>
+          <td>${item.telefone}</td>
+          <td>${item.email}</td>
+          <td><button onclick="removerCliente(${index})">Remover</button></td>
+        </tr>`;
+        tabelaClientes.innerHTML += row;
+      });
+    }
+
+    function removerCliente(index) {
+      clientes.splice(index, 1);
+      localStorage.setItem('financepro_clientes', JSON.stringify(clientes));
+      atualizarTabelaClientes();
+    }
+
+    function removerLancamento(index) {
+      lancamentos.splice(index, 1);
+      localStorage.setItem('financepro_lancamentos', JSON.stringify(lancamentos));
+      atualizarTabelaSaidas();
+    }
+
+    atualizarTabelaSaidas();
+    atualizarTabelaClientes();
+  </script>
 </body>
 </html>
