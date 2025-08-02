@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -81,6 +82,7 @@
 </head>
 <body>
   <h1>FinancePro Simples</h1>
+
   <nav>
     <button onclick="mostrarSecao('entradas')">Entradas</button>
     <button onclick="mostrarSecao('saidas')">Saídas</button>
@@ -88,6 +90,7 @@
     <button onclick="mostrarSecao('fornecedores')">Fornecedores</button>
     <button onclick="mostrarSecao('relatorios')">Relatórios</button>
   </nav>
+
   <div id="entradas" class="section">
     <div class="form">
       <input type="date" id="data-entrada" required>
@@ -111,17 +114,22 @@
       <tbody id="tabela-entradas"></tbody>
     </table>
   </div>
+
   <div id="resumo" class="section active">
     <h3 style="text-align:center;">Resumo</h3>
-    <canvas id="graficoResumo"></canvas>
+    <canvas id="graficoResumo" width="600" height="300"></canvas>
   </div>
+
   <script>
-    let lancamentos = JSON.parse(localStorage.getItem('financepro_lancamentos')) || [];
+    let lancamentos = Array.isArray(JSON.parse(localStorage.getItem('financepro_lancamentos'))) ? JSON.parse(localStorage.getItem('financepro_lancamentos')) : [];
+
     const tabelaEntradas = document.getElementById('tabela-entradas');
+
     function mostrarSecao(secaoId) {
       document.querySelectorAll('.section').forEach(div => div.classList.remove('active'));
       document.getElementById(secaoId).classList.add('active');
     }
+
     function atualizarTabelaEntradas() {
       tabelaEntradas.innerHTML = '';
       lancamentos.forEach((item, index) => {
@@ -138,38 +146,50 @@
         }
       });
     }
+
     function adicionarEntrada() {
       const data = document.getElementById('data-entrada').value;
       const descricao = document.getElementById('descricao-entrada').value;
       const categoria = document.getElementById('categoria-entrada').value;
       const valor = document.getElementById('valor-entrada').value;
       const cliente = document.getElementById('cliente-entrada').value;
+
       if (!data || !descricao || !categoria || !valor) {
         alert("Preencha todos os campos obrigatórios.");
         return;
       }
+
       lancamentos.push({ data, descricao, tipo: 'Entrada', categoria, valor, cliente });
       localStorage.setItem('financepro_lancamentos', JSON.stringify(lancamentos));
       atualizarTabelaEntradas();
       atualizarGraficoResumo();
+
       document.getElementById('data-entrada').value = '';
       document.getElementById('descricao-entrada').value = '';
       document.getElementById('categoria-entrada').value = '';
       document.getElementById('valor-entrada').value = '';
       document.getElementById('cliente-entrada').value = '';
     }
+
     function removerLancamento(index) {
       lancamentos.splice(index, 1);
       localStorage.setItem('financepro_lancamentos', JSON.stringify(lancamentos));
       atualizarTabelaEntradas();
       atualizarGraficoResumo();
     }
+
     function atualizarGraficoResumo() {
-      const entradas = lancamentos.filter(l => l.tipo === 'Entrada').reduce((acc, l) => acc + parseFloat(l.valor), 0);
-      const saidas = lancamentos.filter(l => l.tipo === 'Saída').reduce((acc, l) => acc + parseFloat(l.valor), 0);
+      const entradas = lancamentos.filter(l => l.tipo === 'Entrada').reduce((acc, l) => acc + parseFloat(l.valor || 0), 0);
+      const saidas = lancamentos.filter(l => l.tipo === 'Saída').reduce((acc, l) => acc + parseFloat(l.valor || 0), 0);
+
       const canvas = document.getElementById('graficoResumo');
+      if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      if (window.graficoResumoInstance) window.graficoResumoInstance.destroy();
+
+      if (window.graficoResumoInstance) {
+        window.graficoResumoInstance.destroy();
+      }
+
       window.graficoResumoInstance = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -185,6 +205,7 @@
         }
       });
     }
+
     atualizarTabelaEntradas();
     atualizarGraficoResumo();
   </script>
