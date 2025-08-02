@@ -88,10 +88,9 @@
     <button onclick="mostrarSecao('clientes')">Clientes</button>
     <button onclick="mostrarSecao('fornecedores')">Fornecedores</button>
     <button onclick="mostrarSecao('relatorios')">Relatórios</button>
-    <button onclick="mostrarSecao('resumo')">Resumo</button>
   </nav>
 
-  <div id="entradas" class="section">
+  <div id="entradas" class="section active">
     <div class="form">
       <input type="date" id="data-entrada" required>
       <input type="text" id="descricao-entrada" placeholder="Descrição" required>
@@ -113,116 +112,80 @@
       </thead>
       <tbody id="tabela-entradas"></tbody>
     </table>
+    <div class="form">
+      <h3 style="text-align:center;">Resumo Financeiro</h3>
+      <canvas id="graficoResumo"></canvas>
+    </div>
   </div>
 
   <div id="saidas" class="section">
-    <h3>Cadastro de Saídas</h3>
-    (A ser implementado...)
+    <div class="form">
+      <input type="date" id="data-saida" required>
+      <input type="text" id="descricao-saida" placeholder="Descrição" required>
+      <input type="text" id="categoria-saida" placeholder="Categoria (ex: energia, água...)" required>
+      <input type="number" id="valor-saida" placeholder="Valor (R$)" required>
+      <input type="text" id="cliente-saida" placeholder="Cliente (opcional)">
+      <button onclick="adicionarSaida()">Adicionar Saída</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Descrição</th>
+          <th>Categoria</th>
+          <th>Valor (R$)</th>
+          <th>Cliente</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-saidas"></tbody>
+    </table>
+    <div class="form">
+      <h3 style="text-align:center;">Resumo Financeiro</h3>
+      <canvas id="graficoResumoSaidas"></canvas>
+    </div>
   </div>
 
   <div id="clientes" class="section">
-    <h3>Cadastro de Clientes</h3>
-    (A ser implementado...)
+    <div class="form">
+      <input type="text" id="nome-cliente" placeholder="Nome do Cliente" required>
+      <input type="text" id="email-cliente" placeholder="Email">
+      <input type="text" id="telefone-cliente" placeholder="Telefone">
+      <button onclick="cadastrarCliente()">Cadastrar Cliente</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Email</th>
+          <th>Telefone</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-clientes"></tbody>
+    </table>
   </div>
 
   <div id="fornecedores" class="section">
-    <h3>Cadastro de Fornecedores</h3>
-    (A ser implementado...)
+    <div class="form">
+      <input type="text" id="nome-fornecedor" placeholder="Nome do Fornecedor" required>
+      <input type="text" id="contato-fornecedor" placeholder="Contato">
+      <button onclick="cadastrarFornecedor()">Cadastrar Fornecedor</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Contato</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-fornecedores"></tbody>
+    </table>
   </div>
 
   <div id="relatorios" class="section">
     <h3>Relatórios</h3>
-    <p>Resumo das movimentações (A ser implementado...)</p>
+    <p>(A ser implementado...)</p>
   </div>
 
-  <div id="resumo" class="section">
-    <h3 style="text-align:center;">Resumo Financeiro</h3>
-    <canvas id="graficoResumo"></canvas>
-  </div>
-
-  <script>
-    let lancamentos = JSON.parse(localStorage.getItem('financepro_lancamentos')) || [];
-    const tabelaEntradas = document.getElementById('tabela-entradas');
-
-    function mostrarSecao(secaoId) {
-      document.querySelectorAll('.section').forEach(div => div.classList.remove('active'));
-      document.getElementById(secaoId).classList.add('active');
-    }
-
-    function atualizarTabelaEntradas() {
-      tabelaEntradas.innerHTML = '';
-      lancamentos.forEach((item, index) => {
-        if (item.tipo === 'Entrada') {
-          const row = `<tr>
-            <td>${item.data}</td>
-            <td>${item.descricao}</td>
-            <td>${item.categoria}</td>
-            <td>R$ ${parseFloat(item.valor).toFixed(2)}</td>
-            <td>${item.cliente}</td>
-            <td><button onclick="removerLancamento(${index})">Remover</button></td>
-          </tr>`;
-          tabelaEntradas.innerHTML += row;
-        }
-      });
-    }
-
-    function adicionarEntrada() {
-      const data = document.getElementById('data-entrada').value;
-      const descricao = document.getElementById('descricao-entrada').value;
-      const categoria = document.getElementById('categoria-entrada').value;
-      const valor = document.getElementById('valor-entrada').value;
-      const cliente = document.getElementById('cliente-entrada').value;
-
-      if (!data || !descricao || !categoria || !valor) {
-        alert("Preencha todos os campos obrigatórios.");
-        return;
-      }
-
-      lancamentos.push({ data, descricao, tipo: 'Entrada', categoria, valor, cliente });
-      localStorage.setItem('financepro_lancamentos', JSON.stringify(lancamentos));
-      atualizarTabelaEntradas();
-      atualizarGraficoResumo();
-
-      document.getElementById('data-entrada').value = '';
-      document.getElementById('descricao-entrada').value = '';
-      document.getElementById('categoria-entrada').value = '';
-      document.getElementById('valor-entrada').value = '';
-      document.getElementById('cliente-entrada').value = '';
-    }
-
-    function removerLancamento(index) {
-      lancamentos.splice(index, 1);
-      localStorage.setItem('financepro_lancamentos', JSON.stringify(lancamentos));
-      atualizarTabelaEntradas();
-      atualizarGraficoResumo();
-    }
-
-    function atualizarGraficoResumo() {
-      const entradas = lancamentos.filter(l => l.tipo === 'Entrada').reduce((acc, l) => acc + parseFloat(l.valor), 0);
-      const saidas = lancamentos.filter(l => l.tipo === 'Saída').reduce((acc, l) => acc + parseFloat(l.valor), 0);
-      const canvas = document.getElementById('graficoResumo');
-      const ctx = canvas.getContext('2d');
-
-      if (window.graficoResumoInstance) window.graficoResumoInstance.destroy();
-
-      window.graficoResumoInstance = new Chart(ctx, {
-        type: 'pie',
-        data: {
-          labels: ['Entradas', 'Saídas'],
-          datasets: [{
-            data: [entradas, saidas],
-            backgroundColor: ['#28a745', '#dc3545']
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false
-        }
-      });
-    }
-
-    atualizarTabelaEntradas();
-    atualizarGraficoResumo();
-  </script>
 </body>
 </html>
