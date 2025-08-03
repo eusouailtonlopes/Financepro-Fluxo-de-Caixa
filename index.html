@@ -5,20 +5,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FinancePro Simples</title>
-  <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
-    h1 { color: #ff6b00; text-align: center; }
-    nav { text-align: center; margin-bottom: 20px; }
-    nav button { margin: 5px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; }
-    .section { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    .active { display: block; }
-    table { width: 100%; margin-top: 10px; border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background-color: #ff6b00; color: white; }
-    .btn-remove { color: red; cursor: pointer; }
-  </style>
 </head>
 <body>
   <h1>FinancePro Simples</h1>
@@ -28,119 +14,64 @@
     <button onclick="mostrarSecao('clientes')">Clientes</button>
     <button onclick="mostrarSecao('fornecedores')">Fornecedores</button>
     <button onclick="mostrarSecao('relatorios')">Relatórios</button>
-    <button onclick="logout()">Logout</button>
   </nav>
 
-  <div id="entradas" class="section active">
-    <h2>Entradas</h2>
-    <form onsubmit="salvar(event, 'entradas')">
-      <input name="descricao" placeholder="Descrição" required />
-      <input name="valor" type="number" placeholder="Valor" required />
-      <button type="submit">Adicionar</button>
+  <div id="entradas" class="section">
+    <h2>Lançamento de Entradas</h2>
+    <form>
+      <input type="text" name="descricao" placeholder="Descrição" required>
+      <input type="number" name="valor" placeholder="Valor" required>
+      <input type="date" name="data" required>
+      <button type="submit">Salvar</button>
     </form>
-    <table id="tabela-entradas"></table>
+    <table><thead><tr><th>Descrição</th><th>Valor</th><th>Data</th></tr></thead><tbody></tbody></table>
   </div>
 
   <div id="saidas" class="section">
-    <h2>Saídas</h2>
-    <form onsubmit="salvar(event, 'saidas')">
-      <input name="descricao" placeholder="Descrição" required />
-      <input name="valor" type="number" placeholder="Valor" required />
-      <button type="submit">Adicionar</button>
+    <h2>Lançamento de Saídas</h2>
+    <form>
+      <input type="text" name="descricao" placeholder="Descrição" required>
+      <input type="number" name="valor" placeholder="Valor" required>
+      <input type="date" name="data" required>
+      <button type="submit">Salvar</button>
     </form>
-    <table id="tabela-saidas"></table>
+    <table><thead><tr><th>Descrição</th><th>Valor</th><th>Data</th></tr></thead><tbody></tbody></table>
   </div>
 
   <div id="clientes" class="section">
-    <h2>Clientes</h2>
-    <form onsubmit="salvar(event, 'clientes')">
-      <input name="nome" placeholder="Nome" required />
-      <input name="email" placeholder="Email" required />
-      <button type="submit">Cadastrar</button>
+    <h2>Cadastro de Clientes</h2>
+    <form>
+      <input type="text" name="nome" placeholder="Nome" required>
+      <input type="email" name="email" placeholder="E-mail">
+      <input type="tel" name="telefone" placeholder="Telefone">
+      <button type="submit">Salvar</button>
     </form>
-    <table id="tabela-clientes"></table>
+    <table><thead><tr><th>Nome</th><th>Email</th><th>Telefone</th></tr></thead><tbody></tbody></table>
   </div>
 
   <div id="fornecedores" class="section">
-    <h2>Fornecedores</h2>
-    <form onsubmit="salvar(event, 'fornecedores')">
-      <input name="empresa" placeholder="Empresa" required />
-      <input name="contato" placeholder="Contato" required />
-      <button type="submit">Adicionar</button>
+    <h2>Cadastro de Fornecedores</h2>
+    <form>
+      <input type="text" name="empresa" placeholder="Empresa" required>
+      <input type="text" name="contato" placeholder="Contato">
+      <button type="submit">Salvar</button>
     </form>
-    <table id="tabela-fornecedores"></table>
+    <table><thead><tr><th>Empresa</th><th>Contato</th></tr></thead><tbody></tbody></table>
   </div>
 
   <div id="relatorios" class="section">
     <h2>Relatórios</h2>
-    <canvas id="graficoResumo" width="400" height="200"></canvas>
+    <p>Aqui será exibido o gráfico de pizza</p>
   </div>
 
   <script>
-    let usuario = localStorage.getItem('usuario_logado');
-    if (!usuario) location.href = "#login";
-
     function mostrarSecao(id) {
-      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      if (id === 'relatorios') gerarGrafico();
+      document.querySelectorAll('.section').forEach(div => div.style.display = 'none');
+      document.getElementById(id).style.display = 'block';
     }
 
-    function salvar(e, tipo) {
-      e.preventDefault();
-      const data = {};
-      [...e.target.elements].forEach(input => {
-        if (input.name) data[input.name] = input.value;
-      });
-      const chave = `${usuario}_${tipo}`;
-      const registros = JSON.parse(localStorage.getItem(chave) || "[]");
-      registros.push(data);
-      localStorage.setItem(chave, JSON.stringify(registros));
-      e.target.reset();
-      renderTabela(tipo);
-    }
-
-    function renderTabela(tipo) {
-      const tabela = document.getElementById('tabela-' + tipo);
-      const dados = JSON.parse(localStorage.getItem(`${usuario}_${tipo}`) || "[]");
-      tabela.innerHTML = dados.map((item, i) => `
-        <tr>${Object.values(item).map(val => `<td>${val}</td>`).join('')}
-        <td><span class="btn-remove" onclick="remover('${tipo}', ${i})">🗑️</span></td></tr>
-      `).join('');
-    }
-
-    function remover(tipo, index) {
-      const chave = `${usuario}_${tipo}`;
-      const registros = JSON.parse(localStorage.getItem(chave));
-      registros.splice(index, 1);
-      localStorage.setItem(chave, JSON.stringify(registros));
-      renderTabela(tipo);
-    }
-
-    function gerarGrafico() {
-      const ctx = document.getElementById('graficoResumo').getContext('2d');
-      const entradas = JSON.parse(localStorage.getItem(`${usuario}_entradas`) || "[]");
-      const saidas = JSON.parse(localStorage.getItem(`${usuario}_saidas`) || "[]");
-      const totalEntradas = entradas.reduce((acc, cur) => acc + parseFloat(cur.valor || 0), 0);
-      const totalSaidas = saidas.reduce((acc, cur) => acc + parseFloat(cur.valor || 0), 0);
-      if (window.grafico) window.grafico.destroy();
-      window.grafico = new Chart(ctx, {
-        type: 'pie',
-        data: {
-          labels: ['Entradas', 'Saídas'],
-          datasets: [{
-            data: [totalEntradas, totalSaidas],
-            backgroundColor: ['green', 'red']
-          }]
-        }
-      });
-    }
-
-    ['entradas', 'saidas', 'clientes', 'fornecedores'].forEach(renderTabela);
-    function logout() {
-      localStorage.removeItem('usuario_logado');
-      location.reload();
-    }
+    // Mostrar a primeira seção por padrão
+    window.onload = () => mostrarSecao('entradas');
   </script>
 </body>
 </html>
